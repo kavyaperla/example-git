@@ -1,115 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GitHub Integration Page</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitHub Beta – Full MVP</title>
+
+  <!-- ===============================
+       GITHUB-STYLE THEME
+       =============================== -->
   <style>
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
-      background: #f5f5f5;
-      color: #333;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background-color: #0d1117;
+      color: #c9d1d9;
     }
-    header {
-      background: #24292e;
-      color: white;
-      padding: 20px;
-      text-align: center;
+
+    /* Top Navbar */
+    .navbar {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
     }
-    main {
-      margin: 30px auto;
-      max-width: 800px;
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+    .logo { font-weight: 600; margin-right: 20px; }
+
+    .nav-search { flex: 1; }
+
+    .nav-search input {
+      width: 100%; padding: 6px 10px;
+      background: #0d1117; color: #c9d1d9;
+      border: 1px solid #30363d; border-radius: 6px;
     }
-    footer {
-      text-align: center;
-      padding: 20px;
-      background: #24292e;
-      color: white;
-      margin-top: 30px;
+
+    .nav-actions span { margin-left: 16px; cursor: pointer; }
+
+    /* Layout */
+    .container { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 52px); }
+
+    /* Sidebar */
+    .sidebar { border-right: 1px solid #30363d; padding: 16px; }
+
+    .new-repo-btn {
+      width: 100%; padding: 8px; margin-bottom: 12px;
+      background: #238636; color: white; border: none; border-radius: 6px;
+      cursor: pointer; font-weight: 600;
     }
-    .form-group {
-      margin-bottom: 15px;
+
+    .repo { padding: 8px; border-radius: 6px; cursor: pointer; }
+    .repo:hover { background: #161b22; }
+
+    /* Main */
+    .main { padding: 24px; }
+
+    .repo-header { display: flex; justify-content: space-between; margin-bottom: 16px; }
+
+    /* Tabs */
+    .tabs { display: flex; border-bottom: 1px solid #30363d; margin-bottom: 16px; }
+    .tab { padding: 10px 16px; cursor: pointer; }
+    .tab.active { border-bottom: 2px solid #f78166; font-weight: 600; }
+
+    /* Content sections */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Files */
+    .file { padding: 10px; border-bottom: 1px solid #21262d; }
+
+    /* Modal */
+    .modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      display: none; align-items: center; justify-content: center;
     }
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+
+    .modal-content {
+      background: #161b22; padding: 20px; border-radius: 8px;
+      width: 320px; border: 1px solid #30363d;
     }
-    button {
-      padding: 10px 20px;
-      background: #2ea44f;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    button:hover {
-      background: #2c974b;
-    }
+
+    .modal-content input { width: 100%; margin-top: 10px; padding: 8px; }
+
+    .modal-content button { margin-top: 10px; width: 100%; }
+
+    footer { text-align: center; font-size: 12px; padding: 16px; border-top: 1px solid #30363d; }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>Connect with GitHub</h1>
-  <p>Enter your GitHub details to proceed</p>
-</header>
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="logo">🐙 GitHub Beta</div>
+  <div class="nav-search"><input placeholder="Search repositories" /></div>
+  <div class="nav-actions"><span onclick="openModal()">+</span><span>🔔</span><span>👤</span></div>
+</div>
 
-<main>
-  <h2>GitHub Profile Input</h2>
-  <p>Enter your GitHub username to explore profile info:</p>
+<div class="container">
 
-  <form id="githubForm">
-    <div class="form-group">
-      <label for="githubUsername">GitHub Username</label>
-      <input type="text" id="githubUsername" name="githubUsername"
-             placeholder="e.g., octocat" required>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <button class="new-repo-btn" onclick="openModal()">➕ New Repository</button>
+    <div id="repoList"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="repo-header">
+      <div id="repoTitle">No repository selected</div>
+      <div>🌐 Public</div>
     </div>
-    <button type="submit">View Profile</button>
-  </form>
 
-  <div id="profileResult" style="margin-top: 20px;"></div>
-</main>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('code')">Code</div>
+      <div class="tab" onclick="switchTab('issues')">Issues</div>
+      <div class="tab" onclick="switchTab('pulls')">Pull Requests</div>
+      <div class="tab" onclick="switchTab('settings')">Settings</div>
+    </div>
 
-<footer>
-  <p>Powered by GitHub Pages</p>
-</footer>
+    <!-- CODE -->
+    <div id="code" class="section active">
+      <div class="file">index.html</div>
+      <div class="file">README.md</div>
+      <div class="file">/docs</div>
+    </div>
+
+    <!-- ISSUES -->
+    <div id="issues" class="section">
+      <p>No issues yet 🎉</p>
+    </div>
+
+    <!-- PULL REQUESTS -->
+    <div id="pulls" class="section">
+      <p>No pull requests 🚀</p>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settings" class="section">
+      <h4>GitHub Pages</h4>
+      <p>Enable hosting for this repository.</p>
+      <button onclick="alert('Pages enabled (mock)')">Enable Pages</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE REPO MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Create Repository</h3>
+    <input id="repoName" placeholder="Repository name" />
+    <button onclick="createRepo()">Create</button>
+    <button onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<footer>© 2026 GitHub Beta MVP · Educational UI Clone</footer>
 
 <script>
-document.getElementById('githubForm').addEventListener('submit', function (e) {
-  e.preventDefault();
-  const username = document.getElementById('githubUsername').value.trim();
-  if (!username) return;
+  // ===============================
+  // STATE MANAGEMENT (LocalStorage)
+  // ===============================
+  let repos = JSON.parse(localStorage.getItem('repos')) || [];
 
-  const url = `https://api.github.com/users/${username}`;
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      if (data.message) {
-        document.getElementById('profileResult').innerHTML =
-          '<p style="color:red;">User not found.</p>';
-      } else {
-        document.getElementById('profileResult').innerHTML = `
-          <h3>${data.login}</h3>
-          <p><img src="${data.avatar_url}" alt="Avatar" width="100"></p>
-          <p>Public Repos: ${data.public_repos}</p>
-          <p><a href="${data.html_url}" target="_blank">View on GitHub</a></p>
-        `;
-      }
-    })
-    .catch(err => {
-      document.getElementById('profileResult').innerHTML =
-        '<p style="color:red;">Error fetching profile.</p>';
+  function saveRepos() {
+    localStorage.setItem('repos', JSON.stringify(repos));
+  }
+
+  function renderRepos() {
+    const list = document.getElementById('repoList');
+    list.innerHTML = '';
+    repos.forEach((r, i) => {
+      const div = document.createElement('div');
+      div.className = 'repo';
+      div.textContent = r;
+      div.onclick = () => selectRepo(r);
+      list.appendChild(div);
     });
-});
+  }
+
+  function selectRepo(name) {
+    document.getElementById('repoTitle').textContent = name;
+  }
+
+  // ===============================
+  // MODAL LOGIC
+  // ===============================
+  function openModal() { document.getElementById('modal').style.display = 'flex'; }
+  function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+  function createRepo() {
+    const name = document.getElementById('repoName').value;
+    if (!name) return;
+    repos.push(name);
+    saveRepos();
+    renderRepos();
+    closeModal();
+  }
+
+  // ===============================
+  // TAB NAVIGATION
+  // ===============================
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+    document.querySelector(`.tab[onclick*=\"${tab}\"]`).classList.add('active');
+    document.getElementById(tab).classList.add('active');
+  }
+
+  renderRepos();
 </script>
 
 </body>
