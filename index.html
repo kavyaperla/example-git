@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Integration Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      color: #333;
+    }
+    header {
+      background: #24292e;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    main {
+      margin: 30px auto;
+      max-width: 800px;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #24292e;
+      color: white;
+      margin-top: 30px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #2ea44f;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #2c974b;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Connect with GitHub</h1>
+  <p>Enter your GitHub details to proceed</p>
+</header>
+
+<main>
+  <h2>GitHub Profile Input</h2>
+  <p>Enter your GitHub username to explore profile info:</p>
+
+  <form id="githubForm">
+    <div class="form-group">
+      <label for="githubUsername">GitHub Username</label>
+      <input type="text" id="githubUsername" name="githubUsername"
+             placeholder="e.g., octocat" required>
+    </div>
+    <button type="submit">View Profile</button>
+  </form>
+
+  <div id="profileResult" style="margin-top: 20px;"></div>
+</main>
+
+<footer>
+  <p>Powered by GitHub Pages</p>
+</footer>
+
+<script>
+document.getElementById('githubForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const username = document.getElementById('githubUsername').value.trim();
+  if (!username) return;
+
+  const url = `https://api.github.com/users/${username}`;
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        document.getElementById('profileResult').innerHTML =
+          '<p style="color:red;">User not found.</p>';
+      } else {
+        document.getElementById('profileResult').innerHTML = `
+          <h3>${data.login}</h3>
+          <p><img src="${data.avatar_url}" alt="Avatar" width="100"></p>
+          <p>Public Repos: ${data.public_repos}</p>
+          <p><a href="${data.html_url}" target="_blank">View on GitHub</a></p>
+        `;
+      }
+    })
+    .catch(err => {
+      document.getElementById('profileResult').innerHTML =
+        '<p style="color:red;">Error fetching profile.</p>';
+    });
+});
+</script>
+
+</body>
+</html>
